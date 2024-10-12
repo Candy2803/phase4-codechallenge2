@@ -39,7 +39,7 @@ def restaurant(id):
         return make_response({"error": "Restaurant not found"}, 404)
     
 @app.route('/restaurants/<int:id>', methods=['DELETE'])
-def delete_restaurant():
+def delete_restaurant(id):
     restaurant = Restaurant.query.filter_by(id=id).first()
     if restaurant:
         db.session.delete(restaurant)
@@ -90,25 +90,14 @@ def restaurant_pizza(id):
     
 @app.route('/restaurant_pizzas', methods=['POST'])
 def create_restaurant_pizza():
-    data = request.get_json()
-    restaurant_id = data.get('restaurant_id')
-    pizza_id = data.get('pizza_id')
-    price = data.get('price')
-
-    if not restaurant_id or not pizza_id or not price:
-        return {'error': 'Missing required fields'}, 400
-
-    restaurant = Restaurant.query.get(restaurant_id)
-    pizza = Pizza.query.get(pizza_id)
-
-    if not restaurant or not pizza:
-        return {'error': 'Restaurant or Pizza not found'}, 404
-
-    restaurant_pizza = RestaurantPizza(restaurant=restaurant, pizza=pizza, price=price)
-    db.session.add(restaurant_pizza)
-    db.session.commit()
-
-    return restaurant_pizza.to_dict(), 201
+    try:
+        data = request.get_json() if request.is_json else request.form
+        restaurant_pizzas = RestaurantPizza(**data)
+        db.session.add(restaurant_pizzas)
+        db.session.commit()
+        return make_response(restaurant_pizzas.to_dict(), 200)
+    except ValueError:
+        return make_response({"errors": ["validation errors"]}, 400)
 @app.route('/restaurant_pizzas/<int:id>', methods=['DELETE'])
 def delete_restaurant_pizza(id):
     restaurant_pizza = RestaurantPizza.query.get(id)
