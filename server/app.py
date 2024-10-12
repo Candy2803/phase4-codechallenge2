@@ -27,19 +27,32 @@ def index():
 @app.route('/restaurants')
 def restaurants():
     restaurants = Restaurant.query.all()
-    return [restaurant.to_dict() for restaurant in restaurants]
+    response = [restaurant.to_dict(only=("id", "name", "address")) for restaurant in restaurants]
+    return make_response(response, 200)
 @app.route('/restaurants/<int:id>')
 def restaurant(id):
-    restaurant = Restaurant.query.get(id)
+    restaurant = Restaurant.query.filter_by(id=id).first()
     if restaurant:
-        return restaurant.to_dict()
+        response = restaurant.to_dict()
+        return make_response(response, 200)
     else:
-        return {'error': 'Restaurant not found'}, 404
+        return make_response({"error": "Restaurant not found"}, 404)
+    
+@app.route('/restaurants/<int:id>', methods=['DELETE'])
+def delete_restaurant():
+    restaurant = Restaurant.query.filter_by(id=id).first()
+    if restaurant:
+        db.session.delete(restaurant)
+        db.session.commit()
+        return make_response({"message": "Restaurant deleted successfully"}, 200)
+    else:
+        return make_response({"error": "Restaurant not found"}, 404)
     
 @app.route('/pizzas')
 def pizzas():
     pizzas = Pizza.query.all()
-    return [pizza.to_dict() for pizza in pizzas]
+    response = [pizza.to_dict(only=("id", "name", "ingredients")) for pizza in pizzas]
+    return make_response(response, 200)
 @app.route('/pizzas/<int:id>')
 def pizza(id):
     pizza = Pizza.query.get(id)
@@ -47,6 +60,21 @@ def pizza(id):
         return pizza.to_dict()
     else:
         return {'error': 'Pizza not found'}, 404
+    return make_response(pizza.to_dict(), 200)
+@app.route('/pizzas/<int:id>', methods=['POST'])
+def create_pizza():
+    data = request.get_json()
+    name = data.get('name')
+    ingredients = data.get('ingredients')
+
+    if not name or not ingredients:
+        return {'error': 'Missing required fields'}, 400
+
+    pizza = Pizza(name=name, ingredients=ingredients)
+    db.session.add(pizza)
+    db.session.commit()
+
+    return pizza.to_dict(), 201
     
 @app.route('/restaurant_pizzas')
 def restaurant_pizzas():
