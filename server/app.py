@@ -44,7 +44,7 @@ def delete_restaurant(id):
     if restaurant:
         db.session.delete(restaurant)
         db.session.commit()
-        return make_response({"message": "Restaurant deleted successfully"}, 200)
+        return make_response({"message": "Restaurant deleted successfully"}, 204)
     else:
         return make_response({"error": "Restaurant not found"}, 404)
     
